@@ -1,4 +1,4 @@
-from machine import Pin, I2C, PWM
+from machine import Pin, PWM, I2C
 import utime
 import random
 from lcd_api import LcdApi
@@ -21,10 +21,10 @@ I2C_NUM_COLS = 16
 i2c = I2C(0,sda=sdaPIN, scl=sclPIN, freq=400000)
 lcd = I2cLcd(i2c, I2C_ADDR, I2C_NUM_ROWS, I2C_NUM_COLS)
 
-leds = {'red':Pin(16, Pin.OUT), # type: ignore
-        'blue':Pin(17, Pin.OUT), # type: ignore
-        'green':Pin(18, Pin.OUT), # type: ignore
-        'yellow':Pin(19, Pin.OUT)} # type: ignore
+leds = {'red':Pin(16, Pin.OUT), 
+        'blue':Pin(17, Pin.OUT), 
+        'green':Pin(18, Pin.OUT), 
+        'yellow':Pin(19, Pin.OUT)} 
 
 redBut = Pin(15, Pin.IN)
 blueBut = Pin(14, Pin.IN)
