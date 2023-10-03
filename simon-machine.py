@@ -144,7 +144,7 @@ def loop():
                     if redBut.value() == 1 or greenBut.value() == 1 or yellowBut.value() == 1:
                         led.on()
                         gameOver(pts, leds)
-                    elif blueBut.value() == 0:
+                    elif blueBut.value() == 1:
                         while blueBut.value() == 1:
                             led.on()
                             activeBuzzer(led)
