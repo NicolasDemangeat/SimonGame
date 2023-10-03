@@ -4,39 +4,43 @@ import random
 from lcd_api import LcdApi
 from i2c_lcd import I2cLcd
 
-pts = 0
-LA=440
-SOL=391
-FA=349
-MI=329
-DUTY=32767
-
+# LCD screen
 sdaPIN = Pin(0)
 sclPIN = Pin(1)
-
 I2C_ADDR = 0x27
 I2C_NUM_ROWS = 2
 I2C_NUM_COLS = 16
-
 i2c = I2C(0,sda=sdaPIN, scl=sclPIN, freq=400000)
 lcd = I2cLcd(i2c, I2C_ADDR, I2C_NUM_ROWS, I2C_NUM_COLS)
 
+# Leds dict
 leds = {'red':Pin(16, Pin.OUT), 
         'blue':Pin(17, Pin.OUT), 
         'green':Pin(18, Pin.OUT), 
         'yellow':Pin(19, Pin.OUT)} 
 
-redBut = Pin(15, Pin.IN)
-blueBut = Pin(14, Pin.IN)
-greenBut = Pin(13, Pin.IN)
-yellowBut = Pin(12, Pin.IN)
+# Buttons for leds and reset
+redBut = Pin(15, Pin.IN, Pin.PULL_UP)
+blueBut = Pin(14, Pin.IN, Pin.PULL_UP)
+greenBut = Pin(13, Pin.IN, Pin.PULL_UP)
+yellowBut = Pin(12, Pin.IN, Pin.PULL_UP)
 resetBut = Pin(21, Pin.IN)
 
-arrRandLed = []
+# note frequences
+LA=440
+SOL=391
+FA=349
+MI=329
+DUTY=32767
 bz = PWM(Pin(22, Pin.OUT))
 
+# Var for game loop
+pts = 0
+arrRandLed = []
 
-def gameOver(pts, leds):
+def gameOver():
+    global pts
+    global leds
     lcd.clear()
     lcd.putstr(' GAME OVER ')
     lcd.move_to(0, 1)
@@ -47,8 +51,8 @@ def gameOver(pts, leds):
         leds['red'].on()
         utime.sleep(0.4)
         leds['red'].off()
+        leds['blue'].on()       
         bz.freq(SOL)
-        leds['blue'].on()        
         utime.sleep(0.4)
         leds['blue'].off()
         leds['green'].on()
@@ -59,7 +63,7 @@ def gameOver(pts, leds):
         bz.freq(MI)
         utime.sleep(0.4)
         leds['yellow'].off()
-        bz.duty_u16(0)
+        stopBuzzer()
     utime.sleep(0.5)
     for led in leds.values():
         led.off()
@@ -74,7 +78,7 @@ def gameOver(pts, leds):
     lcd.putstr('Nouvelle Partie')
     utime.sleep(1)
     lcd.clear()
-    loop()
+    loop(pts, arrRandLed)
 
 def choice(x):
     return x[random.randrange(0, len(x))]
@@ -90,6 +94,13 @@ def activeBuzzer(led):
     elif led == leds['yellow']:
         bz.freq(MI)
 
+def stopBuzzer():
+    bz.duty_u16(0)
+
+def win(led):
+    activeBuzzer(led)
+    defineLcdOutput(led)    
+
 def defineLcdOutput(led):
     if led == leds['red']:
         lcd.putstr(' ROUGE  ')
@@ -98,29 +109,36 @@ def defineLcdOutput(led):
     elif led == leds['green']:
         lcd.putstr('  VERT  ')
     elif led == leds['yellow']:
-        lcd.putstr('  JAUNE  ')
+        lcd.putstr(' JAUNE ')
 
-def loop():
-    pts = 0
-    arrRandLed = []
-    while True:
+def simonTurn(pts, arrRandLed):
+    utime.sleep(0.5)
+    arrRandLed.append(choice([led for led in leds.values()]))
+    utime.sleep(0.1)
+    for led in arrRandLed:
+        activeBuzzer(led)
+        defineLcdOutput(led)
+        led.on()
         utime.sleep(0.5)
-        arrRandLed.append(choice([led for led in leds.values()]))
-        utime.sleep(0.1)
-        for led in arrRandLed:
-            activeBuzzer(led)
-            defineLcdOutput(led)
-            led.on()
-            utime.sleep(0.5)
-            bz.duty_u16(0)
-            led.off()
-            lcd.clear()
-            utime.sleep(0.3)
-        lcd.putstr(' A TON TOUR !')
-        lcd.move_to(0, 1)
-        lcd.putstr(f' SCORE: {pts} ')
+        stopBuzzer()
+        led.off()
+        lcd.clear()
+        utime.sleep(0.3)
+    lcd.putstr(' A TON TOUR !')
+    lcd.move_to(0, 1)
+    lcd.putstr(f' SCORE: {pts} ')
+    
 
-        for led in arrRandLed:
+def loop(pts, arrRandLed):
+    while True:
+        simonTurn(pts, arrRandLed)
+        for led in arrRandLed:                
+            if led == leds['red']:
+                blueBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
+                greenBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
+                yellowBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
+                redBut.irq(trigger=Pin.IRQ_FALLING,handler=win)
+                pass
             playerInputOk = False
             while not playerInputOk:
                 if led == leds['red']:
@@ -196,4 +214,4 @@ def loop():
 
 if __name__ == '__main__':
     print('Program is starting...')
-    loop()
+    loop(pts, arrRandLed)
