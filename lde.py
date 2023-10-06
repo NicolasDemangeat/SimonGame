@@ -1,21 +1,22 @@
-from machine import Pin, PWM, I2C
-import utime
-import urandom
-
+from machine import Pin
+import time
+interrupt_flag=0
+debounce_time=0
+pin = Pin(15, Pin.IN, Pin.PULL_UP)
 led = Pin(16, Pin.OUT)
-btn = Pin(15, Pin.IN)
+count=0
 
-def my_handler(pin):
-    print("IRQ with flags:", pin.irq().flags())
+def callback(pin):
+    print(f'in callback {pin}')
+    global interrupt_flag, debounce_time
+    if (time.ticks_ms()-debounce_time) > 500:
+        interrupt_flag= 1
+        debounce_time=time.ticks_ms()
 
-led.value(1)
-utime.sleep(urandom.uniform(2, 5))
-led.value(0)
-btn.irq(trigger = Pin.IRQ_FALLING, handler = my_handler)
-utime.sleep(1)
-led.value(1)
+pin.irq(trigger=Pin.IRQ_FALLING, handler=callback)
 
-
-si led == red:
-    redbut.irc configurer avec handler sur une fonction qui fait continuer la partie
-    blueBut.irc configurer avec handler sur gameover function
+while True:
+    if interrupt_flag is 1:
+        interrupt_flag=0
+        print("Interrupt Detected")
+        led.toggle()

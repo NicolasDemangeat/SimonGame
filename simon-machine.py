@@ -37,8 +37,9 @@ bz = PWM(Pin(22, Pin.OUT))
 # Var for game loop
 pts = 0
 arrRandLed = []
+playerInputOk = False
 
-def gameOver():
+def gameOver(pin):
     global pts
     global leds
     lcd.clear()
@@ -78,6 +79,8 @@ def gameOver():
     lcd.putstr('Nouvelle Partie')
     utime.sleep(1)
     lcd.clear()
+    pts = 0
+    arrRandLed = []
     loop(pts, arrRandLed)
 
 def choice(x):
@@ -97,9 +100,15 @@ def activeBuzzer(led):
 def stopBuzzer():
     bz.duty_u16(0)
 
-def win(led):
+def win(pin, led):
+    global playerInputOk
+    led.on()
     activeBuzzer(led)
-    defineLcdOutput(led)    
+    defineLcdOutput(led)
+    utime.sleep(0.3)
+    led.off()
+    stopBuzzer()
+    playerInputOk = True
 
 def defineLcdOutput(led):
     if led == leds['red']:
@@ -112,7 +121,7 @@ def defineLcdOutput(led):
         lcd.putstr(' JAUNE ')
 
 def simonTurn(pts, arrRandLed):
-    utime.sleep(0.5)
+    utime.sleep(0.2)
     arrRandLed.append(choice([led for led in leds.values()]))
     utime.sleep(0.1)
     for led in arrRandLed:
@@ -127,91 +136,116 @@ def simonTurn(pts, arrRandLed):
     lcd.putstr(' A TON TOUR !')
     lcd.move_to(0, 1)
     lcd.putstr(f' SCORE: {pts} ')
-    
+
+def test(pin):
+    print(f'ok {pin}')
 
 def loop(pts, arrRandLed):
+    global playerInputOk
+    
     while True:
         simonTurn(pts, arrRandLed)
-        for led in arrRandLed:                
-            if led == leds['red']:
-                blueBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
-                greenBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
-                yellowBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
-                redBut.irq(trigger=Pin.IRQ_FALLING,handler=win)
-                pass
+        for led in arrRandLed:
             playerInputOk = False
             while not playerInputOk:
+                utime.sleep(0.1)
                 if led == leds['red']:
-                    if blueBut.value() == 1 or greenBut.value() == 1 or yellowBut.value() == 1:
-                        led.on()
-                        gameOver(pts, leds)
-                    elif redBut.value() == 1:
-                        while redBut.value() == 1:
-                            led.on()
-                            activeBuzzer(led)
-                            defineLcdOutput(led)
-                        utime.sleep(0.2)
-                        bz.duty_u16(0)
-                        led.off()
-                        lcd.clear()
-                        playerInputOk = True
-                    else:
-                        led.off()
-                        
+                    print('dans red')
+                    blueBut.irq(trigger=Pin.IRQ_FALLING, handler=gameOver)
+                    greenBut.irq(trigger=Pin.IRQ_FALLING, handler=gameOver)
+                    yellowBut.irq(trigger=Pin.IRQ_FALLING, handler=gameOver)
+                    redBut.irq(trigger=Pin.IRQ_FALLING, handler=lambda pin, arg=led: win(pin, arg))
                 elif led == leds['blue']:
-                    if redBut.value() == 1 or greenBut.value() == 1 or yellowBut.value() == 1:
-                        led.on()
-                        gameOver(pts, leds)
-                    elif blueBut.value() == 1:
-                        while blueBut.value() == 1:
-                            led.on()
-                            activeBuzzer(led)
-                            defineLcdOutput(led)
-                        utime.sleep(0.2)
-                        bz.duty_u16(0)
-                        led.off()
-                        lcd.clear()
-                        playerInputOk = True
-                    else:
-                        led.off()
-                        
+                    print('dans red')
+                    blueBut.irq(trigger=Pin.IRQ_FALLING, handler=lambda pin, arg=led: win(pin, arg))
+                    greenBut.irq(trigger=Pin.IRQ_FALLING, handler=gameOver)
+                    yellowBut.irq(trigger=Pin.IRQ_FALLING, handler=gameOver)
+                    redBut.irq(trigger=Pin.IRQ_FALLING, handler=gameOver)
                 elif led == leds['green']:
-                    if blueBut.value() == 1 or redBut.value() == 1 or yellowBut.value() == 1:
-                        led.on()
-                        gameOver(pts, leds)
-                    elif greenBut.value() == 1:
-                        while greenBut.value() == 1:
-                            led.on()
-                            activeBuzzer(led)
-                            defineLcdOutput(led)
-                        utime.sleep(0.2)
-                        bz.duty_u16(0)
-                        led.off()
-                        lcd.clear()
-                        playerInputOk = True
-                    else:
-                        led.off()
-                        
+                    print('dans red')
+                    blueBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
+                    greenBut.irq(trigger=Pin.IRQ_FALLING,handler=lambda pin, arg=led: win(pin, arg))
+                    yellowBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
+                    redBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
                 elif led == leds['yellow']:
-                    if blueBut.value() == 1 or redBut.value() == 1 or greenBut.value() == 1:
-                        led.on()
-                        gameOver(pts, leds)
-                    elif yellowBut.value() == 1:
-                        while yellowBut.value() == 1:
-                            led.on()
-                            activeBuzzer(led)
-                            defineLcdOutput(led)
-                        utime.sleep(0.2)
-                        bz.duty_u16(0)
-                        led.off()
-                        lcd.clear()
-                        playerInputOk = True
-                    else:
-                        led.off()
-                        bz.duty_u16(0)
+                    print('dans red')
+                    blueBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
+                    greenBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
+                    yellowBut.irq(trigger=Pin.IRQ_FALLING,handler=lambda pin, arg=led: win(pin, arg))
+                    redBut.irq(trigger=Pin.IRQ_FALLING,handler=gameOver)
 
         pts += 1
 
 if __name__ == '__main__':
     print('Program is starting...')
     loop(pts, arrRandLed)
+            
+                # if led == leds['red']:
+                #     if blueBut.value() == 1 or greenBut.value() == 1 or yellowBut.value() == 1:
+                #         led.on()
+                #         gameOver()
+                #     elif redBut.value() == 1:
+                #         while redBut.value() == 1:
+                #             led.on()
+                #             activeBuzzer(led)
+                #             defineLcdOutput(led)
+                #         utime.sleep(0.2)
+                #         bz.duty_u16(0)
+                #         led.off()
+                #         lcd.clear()
+                #         playerInputOk = True
+                #     else:
+                #         led.off()
+                        
+                # elif led == leds['blue']:
+                #     if redBut.value() == 1 or greenBut.value() == 1 or yellowBut.value() == 1:
+                #         led.on()
+                #         gameOver()
+                #     elif blueBut.value() == 1:
+                #         while blueBut.value() == 1:
+                #             led.on()
+                #             activeBuzzer(led)
+                #             defineLcdOutput(led)
+                #         utime.sleep(0.2)
+                #         bz.duty_u16(0)
+                #         led.off()
+                #         lcd.clear()
+                #         playerInputOk = True
+                #     else:
+                #         led.off()
+                        
+                # elif led == leds['green']:
+                #     if blueBut.value() == 1 or redBut.value() == 1 or yellowBut.value() == 1:
+                #         led.on()
+                #         gameOver()
+                #     elif greenBut.value() == 1:
+                #         while greenBut.value() == 1:
+                #             led.on()
+                #             activeBuzzer(led)
+                #             defineLcdOutput(led)
+                #         utime.sleep(0.2)
+                #         bz.duty_u16(0)
+                #         led.off()
+                #         lcd.clear()
+                #         playerInputOk = True
+                #     else:
+                #         led.off()
+                        
+                # elif led == leds['yellow']:
+                #     if blueBut.value() == 1 or redBut.value() == 1 or greenBut.value() == 1:
+                #         led.on()
+                #         gameOver()
+                #     elif yellowBut.value() == 1:
+                #         while yellowBut.value() == 1:
+                #             led.on()
+                #             activeBuzzer(led)
+                #             defineLcdOutput(led)
+                #         utime.sleep(0.2)
+                #         bz.duty_u16(0)
+                #         led.off()
+                #         lcd.clear()
+                #         playerInputOk = True
+                #     else:
+                #         led.off()
+                #         bz.duty_u16(0)
+
