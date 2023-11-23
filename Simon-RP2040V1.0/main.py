@@ -1,7 +1,6 @@
 from machine import *
 import utime
 import random
-from lcd_api import LcdApi
 from i2c_lcd import I2cLcd
 
 pts = 0
@@ -26,11 +25,11 @@ leds = {'red':Pin(16, Pin.OUT),
         'green':Pin(18, Pin.OUT),
         'yellow':Pin(19, Pin.OUT)}
 
-redBut = Pin(15, Pin.IN)
-blueBut = Pin(14, Pin.IN)
-greenBut = Pin(13, Pin.IN)
-yellowBut = Pin(12, Pin.IN)
-resetBut = Pin(21, Pin.IN)
+redBut = Pin(15, Pin.IN, Pin.PULL_DOWN)
+blueBut = Pin(14, Pin.IN, Pin.PULL_DOWN)
+greenBut = Pin(13, Pin.IN, Pin.PULL_DOWN)
+yellowBut = Pin(12, Pin.IN, Pin.PULL_DOWN)
+resetBut = Pin(21, Pin.IN, Pin.PULL_DOWN)
 
 arrRandLed = []
 bz = PWM(Pin(22, Pin.OUT))
